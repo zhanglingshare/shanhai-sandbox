@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>黄仁勋结局模拟器 · 社会计算沙箱</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#080b12; --bg2:#0c111d; --panel:#121a2c; --panel2:#172136; --line:#22304d;
+  --txt:#e8eefc; --sub:#93a2c0; --mut:#64748f;
+  --cyan:#3ee0ff; --vio:#8b7bff; --grn:#3ddc97; --amb:#ffb454; --red:#ff5c7a; --blu:#5aa2ff;
+  --glow:0 0 24px rgba(62,224,255,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:radial-gradient(1200px 600px at 80% -10%,#14233f 0%,var(--bg) 55%),var(--bg);
+  color:var(--txt);font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.6;letter-spacing:.2px}
+#app{max-width:720px;margin:0 auto;min-height:100vh;padding:0 16px 110px}
+@media(min-width:900px){#app{max-width:1180px}}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:.5px}
+a{color:var(--cyan);text-decoration:none}
+.mut{color:var(--mut)}.sub{color:var(--sub)}
+.cyan{color:var(--cyan)}.vio{color:var(--vio)}.grn{color:var(--grn)}.amb{color:var(--amb)}.red{color:var(--red)}.blu{color:var(--blu)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.row{display:flex;gap:12px}.col{display:flex;flex-direction:column;gap:12px}
+.wrap{flex-wrap:wrap}.grow{flex:1}.center{align-items:center}.between{justify-content:space-between}
+.card{background:linear-gradient(180deg,var(--panel) 0%,var(--bg2) 100%);border:1px solid var(--line);
+  border-radius:16px;padding:18px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(62,224,255,.5),transparent)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;
+  border:1px solid var(--line);background:var(--panel2);color:var(--sub);white-space:nowrap}
+.chip.on{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--glow)}
+.tag{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:500}
+.t-conf{background:rgba(61,220,151,.15);color:var(--grn)}
+.t-rep{background:rgba(255,180,84,.15);color:var(--amb)}
+.t-rum{background:rgba(255,92,122,.15);color:var(--red)}
+.t-miss{background:rgba(100,116,143,.18);color:var(--mut)}
+.btn{appearance:none;border:1px solid var(--line);background:var(--panel2);color:var(--txt);
+  padding:13px 18px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;width:100%;
+  transition:.15s;font-family:inherit}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(90deg,#0e7d96,#1560c8);border-color:transparent;box-shadow:var(--glow)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:8px 12px;font-size:13px;width:auto}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.hero{padding:34px 6px 10px}
+.kicker{font-size:12px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase}
+.big{font-size:30px;line-height:1.25;font-weight:900;margin:8px 0}
+@media(min-width:900px){.big{font-size:40px}}
+.grid2{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
+.grid3{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.grid3{grid-template-columns:repeat(3,1fr)}}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .v{font-size:24px;font-weight:800;font-family:ui-monospace,monospace}
+.stat .l{font-size:12px;color:var(--mut);margin-top:2px}
+.sec{margin-top:30px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.sec-h .no{font-family:ui-monospace,monospace;color:var(--cyan);font-size:13px}
+.sec-h h2{font-size:20px}
+.sec-h .rule{flex:1;height:1px;background:var(--line)}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:6px;
+  background:linear-gradient(90deg,var(--cyan) var(--p,50%),var(--line) var(--p,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:#fff;border:3px solid var(--cyan);box-shadow:var(--glow);cursor:pointer}
+.knob .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.knob .val{font-family:ui-monospace,monospace;color:var(--cyan);font-weight:700}
+canvas{display:block;width:100%;border-radius:10px}
+.cv-wrap{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.opt{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel2);cursor:pointer;transition:.15s}
+.opt:active{transform:.98}.opt.sel{border-color:var(--cyan);box-shadow:var(--glow)}
+.opt h4{display:flex;align-items:center;gap:8px}
+.divider{height:1px;background:var(--line);margin:14px 0}
+.pill-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:rgba(10,14,22,.86);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+.pill-nav .inner{max-width:1180px;margin:0 auto;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.pill-nav .inner::-webkit-scrollbar{display:none}
+.pn{flex:0 0 auto;padding:8px 12px;border-radius:10px;font-size:13px;color:var(--sub);cursor:pointer;border:1px solid transparent;white-space:nowrap}
+.pn.on{color:var(--cyan);background:var(--panel2);border-color:var(--line)}
+.prog{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin:14px 0}
+.prog i{display:block;height:100%;background:linear-gradient(90px,var(--cyan),var(--blu));transition:.3s}
+.barline{display:flex;align-items:center;gap:10px;margin:9px 0}
+.barline .lab{width:118px;font-size:13px;color:var(--sub);flex:0 0 auto}
+.barline .track{flex:1;height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.barline .fill{height:100%;border-radius:6px}
+.barline .num{width:64px;text-align:right;font-family:ui-monospace,monospace;font-size:13px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:0 14px;margin:8px 0}
+details summary{cursor:pointer;padding:12px 0;font-weight:600;list-style:none;display:flex;justify-content:space-between}
+details summary::-webkit-details-marker{display:none}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .body{padding:12px 0}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--panel);
+  border:1px solid var(--cyan);color:var(--txt);padding:10px 18px;border-radius:10px;z-index:99;box-shadow:var(--glow);
+  opacity:0;transition:.25s;pointer-events:none;max-width:90%;font-size:14px}
+.toast.show{opacity:1}
+.flow-node{fill:var(--panel2);stroke:var(--line);stroke-width:1.5}
+.flow-lat{fill:#1a2740;stroke:var(--cyan);stroke-width:1.5}
+.flow-text{fill:var(--txt);font-size:12px;font-family:inherit}
+.flow-path{stroke-width:1.8;fill:none;marker-end:url(#arrow)}
+.hidden{display:none}
+.fade{animation:fade .4s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.src{font-size:11px;word-break:break-all;color:var(--mut)}
+.dash{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="pill-nav"><div class="inner" id="nav"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ================= 常量与锁定权重 ================= */
+const STATES=["comeback","external","internal","blackswan"];
+const SLABEL={comeback:"黄仁勋回归",external:"外部新CEO改组",internal:"内部/临时CEO转正",blackswan:"调查升级"};
+const SCOLOR={comeback:"#3ddc97",external:"#3ee0ff",internal:"#8b7bff",blackswan:"#ffb454"};
+const ORDER=["E","P","Pol","M","C"];
+const HALF=0.10, SEED=20261118;
+const W={
+ comeback:[-1.2,-1.0,-1.4,-0.8,1.6,1.10],
+ external:[0.8,1.3,1.5,0.9,-1.0,-0.30],
+ internal:[0.4,1.0,0.5,0.7,-0.6,0.00],
+ blackswan:[1.6,0.3,0.6,1.1,-0.5,-1.40]};
+const DATA={"facts":[{"id":"F01","date":"2026-11-17","certainty":"confirmed","text":"FY2027 Q3 营收 1158.4 亿美元，同比 +103%，环比 +20%；GAAP 净利 653 亿，GAAP EPS 2.70；毛利率 74.8%","url":"https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/"},{"id":"F02","date":"2026-11-17","certainty":"confirmed","text":"数据中心营收 1076 亿美元，同比 +110%，占总营收约 93%；Vera Rubin NVL72 已开始出货，为史上最快爬坡产品","url":"https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/"},{"id":"F03","date":"2026-11-17","certainty":"confirmed","text":"Q4 营收指引 1300 亿美元±3%；该指引未计入任何来自中国的数据中心营收；Q4 GAAP/非GAAP 毛利率指引 71%~72%","url":"https://finance.eastmoney.com/a/202611183933575587.html"},{"id":"F04","date":"2026-11-17","certainty":"confirmed","text":"董事会 2026-09 批准新增 1500 亿美元回购授权，无到期日；当季向股东返还 281 亿美元，剩余授权约 2273 亿美元","url":"https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/"},{"id":"F05","date":"2026-11-17","certainty":"reported","text":"董事长哈维·琼斯在财报当晚报态：董事会无意恢复黄仁勋 CEO 职务；此前黄仁勋称若董事会邀请愿回归","url":"https://finance.sina.com.cn/stock/t/2026-11-18/doc-inizcmfi4914093.shtml"},{"id":"F06","date":"2026-11-16","certainty":"confirmed","text":"董事会设立国家安全与出口管制监督委员会","url":"https://nvidianews.nvidia.com/news/nvidia-announces-rezultate-financiare-pentru-al?page=5"},{"id":"F07","date":"2026-11-18","certainty":"reported","text":"11-18 美股收盘 155.46 美元，跌 0.44%，总市值约 3.75 万亿美元","url":"https://cj.sina.com.cn/articles/view/1801487174/6b60834602003bkqq"},{"id":"F08","date":"2026-11-17","certainty":"reported","text":"电话会上称云业务积压订单约 2.5 万亿美元（前值 2 万亿）；FY2028 营收增速指引由约 70% 上调至约 75%","url":"https://cj.sina.com.cn/articles/view/5952915705/162d248f906703tmt2?froms=ttmp"},{"id":"F09","date":"2026-11-17","certainty":"reported","text":"当季对供应商采购承诺由 2790 亿升至 3900 亿美元，增量主要来自长期存储器采购","url":"https://m.weibo.cn/detail/5366745791464151"},{"id":"F10","date":"2026-11-12","certainty":"confirmed","text":"黄仁勋辞任总裁/CEO/董事即刻生效；CFO Colette Kress 任临时 CEO；Harvey C. Jones 任首位董事长；提交 8-K","url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition/"},{"id":"F11","date":"2026-11-10","certainty":"confirmed","text":"独立董事聘请前纽约南区代理联邦检察官 Joon H. Kim 及 Wachtell, Lipton, Rosen & Katz 律所；独立调查进行中且未结论","url":"http://m.toutiao.com/group/7706760151345021490/"},{"id":"F12","date":"2026-11-09","certainty":"reported","text":"美股收盘后英伟达及黄仁勋遭股东集体诉讼，指控欺诈股东","url":"http://m.toutiao.com/group/7706760151345021490/"},{"id":"F13","date":"2026-11-12","certainty":"confirmed","text":"新加坡当局自 2025-02 调查 Megaspeed 与 Alice Huang，未找到足够间谍证据、不起诉，仅禁止其再入境","url":"https://companies.caixin.com/2026-11-12/102504166.html"},{"id":"F14","date":"2026-11-12","certainty":"reported","text":"媒体报 Megaspeed 及马来子公司转运至少 75 亿美元英伟达芯片至中国，公司否认；英伟达 2025-06 已将其列内部黑名单","url":"https://fortune.com/2026/11/12/nvidia-changed-earnings-report-format-singapore-revenue-megaspeed-probe-colette-kress/"},{"id":"F15","date":"2026-11-15","certainty":"reported","text":"美国财长贝森特公开呼吁英伟达重大改组、从外部寻找新领导人","url":"https://finance.sina.com.cn/stock/usstock/c/2026-11-16/doc-iniywhcp1499931.shtml"},{"id":"F16","date":"2026-11-15","certainty":"reported","text":"FT 报道黄仁勋考虑回归，硅谷盟友组建战情室并争取白宫支持；Altimeter/Atreides 公开信含回归选项","url":"https://original.ifeng.com/c/8y5QrZj2Ecq"},{"id":"F17","date":"2026-11-18","certainty":"missing_evidence","text":"白宫对黄仁勋回归的正式态度：无公开证据","url":"https://original.ifeng.com/c/8y5QrZj2Ecq"},{"id":"F18","date":"2026-11-12","certainty":"reported","text":"员工自发投票约 97% 希望黄仁勋留任；员工流失率约 2.5%","url":"https://36kr.com/p/4067821090460809"},{"id":"F19","date":"2026-11-16","certainty":"reported","text":"黄仁勋与至少一名潜在 CEO 候选人通话；其本人持有公司约 3.58% 股份","url":"http://m.toutiao.com/group/7708388564606419491/"}],"market":[{"date":"2026-10-28","close":215.38,"volume":93030154,"market_cap":5436738868694.76,"note":"英伟达当日收跌1.18%；市值数据基于252.4亿流通股计算。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-10-29","close":213.66,"volume":77568070,"market_cap":5393321695075.32,"note":"英伟达当日收跌0.80%。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-10-30","close":204.64,"volume":168386423,"market_cap":5165633959001.28,"note":"英伟达当日大跌4.22%，成交量明显放大。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-02","close":202.06,"volume":119272203,"market_cap":5100508198572.12,"note":"英伟达当日收跌1.26%，市值失守5.1万亿美元关口。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-03","close":206.69,"volume":91943400,"market_cap":null,"note":"英伟达当日收涨2.29%；市值未单独披露。","url":"https://twelvedata.com/stocks/NVDA"},{"date":"2026-11-04","close":200.13,"volume":149033300,"market_cap":null,"note":"英伟达当日收跌1.66%。","url":"https://twelvedata.com/stocks/NVDA"},{"date":"2026-11-05","close":181.6,"volume":306127812,"market_cap":4584045772843.2,"note":"英伟达当日重挫7.38%，成交量大幅放大。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-06","close":186.64,"volume":180212300,"market_cap":4711268188565.28,"note":"英伟达当日反弹2.78%。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-09","close":178.67,"volume":462719300,"market_cap":4510085122433.34,"note":"英伟达当日大跌4.27%，成交量创阶段天量。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-10","close":168.89,"volume":429273200,"market_cap":4263213053829.78,"note":"英伟达当日续跌5.47%，延续跌势。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-11","close":173.73,"volume":339214800,"market_cap":4385386960991.46,"note":"英伟达当日反弹2.87%。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-12","close":166.19,"volume":740019481,"market_cap":4195058188264.38,"note":"黄仁勋卸任CEO消息冲击，英伟达当日暴跌4.34%，成交量达7.4亿股天量。","url":"https://www.statmuse.com/money/nvda-stock-market-cap-2026"},{"date":"2026-11-13","close":162.85,"volume":364394425,"market_cap":3932000000000,"note":"英伟达当日续跌2.01%，市值回落至约3.93万亿美元；期权市场开始定价财报大幅波动。","url":"https://www.weissratings.com/stocks/us/nasdaq/nvda/"},{"date":"2026-11-16","close":156.14,"volume":10264109,"market_cap":null,"note":"财报前一个交易日，英伟达跌4.12%；11月20日平值跨式期权定价约10.3%的波动幅度，隐含波动率处于2025年4月以来高位。","url":"https://www.spotgamma.com/nvidia-earnings-preview-options-gamma-skew"},{"date":"2026-11-17","close":155.46,"volume":345400000,"market_cap":3762974000000,"note":"财报当日，英伟达微跌0.44%；期权总成交400.6万张，看跌占40%、看涨占60%；出现240美元行权价2027年6月到期的看跌期权异动大单，名义金额约2896万美元，隐含波动率45.71%。盘后公布Q3营收1158亿美元超预期，盘后股价一度涨超4%至约161.57美元。","url":"https://www.fool.com/investting/2026/11/17/stock-market-today-nvidia-slides-ahead-of-earnings/"}],"viewpoints":[{"narrative":"英伟达董事会已明确拒绝黄仁勋回归，已聘请海德思哲全球海选正式CEO，回归大门基本关闭。","platform":"微博 / 财经媒体（中国经济网、新浪财经等）","evidence_type":"事实","weakness":"依据为电话会表态与猎头委托等公开信息，未披露投票细节、分歧或私下沟通。","assumption":"隐含假设：董事会当前立场稳定、不会因股价、业绩或外部压力反转。"},{"narrative":"黄仁勋辞职是个人行为失德的强制离场，而非主动功成身退，因此复职空间极低。","platform":"中文社交媒体（微博）及英文科技媒体（GeekPlanet、Club386等）","evidence_type":"事实","weakness":"公开报道仅以\"个人行为不当/不符合公司标准\"概括，事件细节、证据与处理程序未透明披露。","assumption":"隐含假设：失德定性一旦成立，公司不会为护盘或业绩而让其复职。"},{"narrative":"黄仁勋本人已释放和解信号，称若符合公司利益、董事会邀请，他愿意重返CEO岗位。","platform":"英文媒体（CBS News、Implicator等）及中文媒体转载","evidence_type":"事实","weakness":"声明措辞克制，只是表态愿意，并非明确游说复职；缺少黄仁勋团队进一步诉求。","assumption":"隐含假设：他回归意愿真实，且会将该意愿继续转化为公开或私下行动。"},{"narrative":"董事会主席强硬、甚至\"扫地出门\"式切割，资本不恤创始人旧情，权力已从黄仁勋转向董事会与CFO。","platform":"微博情绪化帖文、自媒体评论","evidence_type":"情绪","weakness":"以\"三记耳光\"\"门焊死\"等比喻叙事，把正常治理动作渲染为戏剧化清算，缺乏内部决策证据。","assumption":"隐含假设：董事会拒绝复职是针对个人的刻意羞辱，而非治理流程决定。"},{"narrative":"英伟达单季营收破千亿美元、同比翻倍，证明在无黄仁勋情况下公司照常运转，无需依赖他回归。","platform":"中文财经媒体、英文商业媒体报道","evidence_type":"事实","weakness":"财报属于历史业绩，未必能代表后黄仁勋时代的长期技术路线与客户黏性，市场一个月跌近29%显示分歧。","assumption":"隐含假设：短期财务延续性足以替代创始人驱动的战略与关键客户关系。"},{"narrative":"黄仁勋是AI算力时代稀缺领袖，特朗普、马斯克等公开人物背书或招揽，使其存在被迎回、被挖走或政治斡旋空间。","platform":"门户新闻聚合（网易/每日经济新闻、英文评论）","evidence_type":"推断","weakness":"相关表态多为外部人物评论或招揽意向，与英伟达董事会正式立场相矛盾，也无股东或董事联署。","assumption":"隐含假设：外部权力人物或市场舆论压力可改写董事会已作出的CEO遴选决定。"},{"narrative":"董事会缺乏半导体工程经验（距上次运营职务平均24年），叠加关键客户、供应链与AI政策高度绑定黄仁勋，回归或强势留任仍有现实必要性。","platform":"财经媒体引用Cablelabs高管评论（中国经济网等）","evidence_type":"推断","weakness":"属于外部专家观察与结构判断，没有股东提案、董事辞职或客户施压等硬证据。","assumption":"隐含假设：技术治理短板与关系依赖，最终会压过董事会对失德问题的处理立场。"}],"edges":[{"source":"黄仁勋本人","target":"董事会成员（含董事长Harvey C. Jones）","relation":"治理","strength":0.95,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"黄仁勋本人","target":"临时CEO Colette Kress","relation":"雇佣","strength":0.9,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"董事会成员（含董事长Harvey C. Jones）","target":"临时CEO Colette Kress","relation":"治理","strength":0.98,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"董事会成员（含董事长Harvey C. Jones）","target":"独立董事","relation":"治理","strength":0.85,"url":"https://nvidianews.nvidia.com/news/statement-from-the-independent-members-of-the-nvidia-board"},{"source":"独立董事","target":"独立律所Wachtell与检察官Joon H. Kim","relation":"合规","strength":1.0,"url":"https://nvidianews.nvidia.com/news/statement-from-the-independent-members-of-the-nvidia-board"},{"source":"独立律所Wachtell与检察官Joon H. Kim","target":"黄仁勋本人","relation":"合规","strength":0.95,"url":"https://www.cnbc.com/2026/11/12/nvidia-joon-kim-jensen-huang-investigation-wachtell-lipton.html"},{"source":"独立律所Wachtell与检察官Joon H. Kim","target":"监管机构","relation":"合规","strength":0.55,"url":"https://www.cnbc.com/2026/11/12/nvidia-joon-kim-jensen-huang-investigation-wachtell-lipton.html"},{"source":"大客户（微软/谷歌/亚马逊/Meta/OpenAI）","target":"黄仁勋本人","relation":"信息","strength":0.6,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"大客户（微软/谷歌/亚马逊/Meta/OpenAI）","target":"临时CEO Colette Kress","relation":"信息","strength":0.82,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"大客户（微软/谷歌/亚马逊/Meta/OpenAI）","target":"董事会成员（含董事长Harvey C. Jones）","relation":"治理","strength":0.7,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"机构股东","target":"董事会成员（含董事长Harvey C. Jones）","relation":"治理","strength":0.72,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"机构股东","target":"临时CEO Colette Kress","relation":"资金","strength":0.68,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"盟友战情室","target":"黄仁勋本人","relation":"盟友","strength":0.45,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"员工群体","target":"黄仁勋本人","relation":"雇佣","strength":0.78,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"员工群体","target":"临时CEO Colette Kress","relation":"雇佣","strength":0.9,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"},{"source":"员工群体","target":"董事会成员（含董事长Harvey C. Jones）","relation":"治理","strength":0.74,"url":"https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"}],"inputs":{"E":0.355,"P":0.97,"Pol":0.6,"M":0.9685,"C":0.644},"point":{"comeback":0.0225,"external":0.5833,"internal":0.2987,"blackswan":0.0954},"sna":{"nodes":["临时CEO Colette Kress","员工群体","大客户（微软/谷歌/亚马逊/Meta/OpenAI）","机构股东","独立律所Wachtell与检察官Joon H. Kim","独立董事","监管机构","盟友战情室","董事会成员（含董事长Harvey C. Jones）","黄仁勋本人"],"degree":[4.28,2.42,2.12,1.4,2.5,1.85,0.55,0.45,4.94,4.63],"betweenness":[0.083,0.0,0.0,0.0,0.25,0.046,0.0,0.0,0.241,0.463]},"sobol":{"E":{"S1":0.785,"ST":0.898},"P":{"S1":0.741,"ST":0.853},"Pol":{"S1":0.631,"ST":0.792},"M":{"S1":0.834,"ST":0.914},"C":{"S1":0.587,"ST":0.726}},"threshold":{"E":{"current":0.35,"flip_at":null},"P":{"current":0.97,"flip_at":null},"Pol":{"current":0.6,"flip_at":null},"M":{"current":0.97,"flip_at":null},"C":{"current":0.64,"flip_at":null}},"historical":{"altman_2023":{"person":"Sam Altman","actual":"comeback","predicted":"comeback","hit":true,"p_actual":0.6104,"probs":{"comeback":0.6104,"external":0.1583,"internal":0.1866,"blackswan":0.0447}},"hurd_2010":{"person":"Mark Hurd","actual":"external","predicted":"external","hit":true,"p_actual":0.5538,"probs":{"comeback":0.0312,"external":0.5538,"internal":0.3163,"blackswan":0.0987}},"kalanick_2017":{"person":"Travis Kalanick","actual":"external","predicted":"external","hit":true,"p_actual":0.6383,"probs":{"comeback":0.025,"external":0.6383,"internal":0.2634,"blackswan":0.0732}},"stonecipher_2005":{"person":"Harry Stonecipher","actual":"external","predicted":"external","hit":true,"p_actual":0.5442,"probs":{"comeback":0.0496,"external":0.5442,"internal":0.3252,"blackswan":0.081}},"muilenburg_2019":{"person":"Dennis Muilenburg","actual":"external","predicted":"external","hit":true,"p_actual":0.683,"probs":{"comeback":0.0056,"external":0.683,"internal":0.224,"blackswan":0.0875}},"dunn_2012":{"person":"Brian Dunn","actual":"external","predicted":"external","hit":true,"p_actual":0.5177,"probs":{"comeback":0.0477,"external":0.5177,"internal":0.3419,"blackswan":0.0927}},"jobs_1985":{"person":"Steve Jobs","actual":"internal","predicted":"external","hit":false,"p_actual":0.3282,"probs":{"comeback":0.2244,"external":0.3738,"internal":0.3282,"blackswan":0.0736}},"stumpf_2016":{"person":"John Stumpf","actual":"internal","predicted":"external","hit":false,"p_actual":0.2445,"probs":{"comeback":0.0099,"external":0.6547,"internal":0.2445,"blackswan":0.0909}}},"hist_metrics":{"n_cases":8,"top1_accuracy":0.75,"brier_score_mean":0.4032,"log_loss_mean":0.713,"mean_prob_on_actual":0.515,"uniform_baseline":{"brier":0.75,"log_loss":1.3863,"top1_accuracy":0.25},"calibration_note":"两个误判案例实际结局均为 internal，模型系统性高估 external、低估内部接班；权重不据此回改，作为已知偏差披露","confusion":{"comeback":["comeback"],"external":["external","external","external","external","external"],"internal":["external","external"]}},"caveats":["单一历史事件 n=1，精确点概率在统计上不可识别","点值来自规则合成，区间由 ±0.10 编码不确定性与 ±30% 权重/温度扫描共同给出","11-17 财报与 11-18 盘面为新增证据，模型已据此从 11-16 版更新"],"pains":[{"who":"大客户","pain":"被单点锁定，议价权与供应链安全受制","link":"Pol"},{"who":"董事会","pain":"关键人物风险，怕踩踏与合规连带","link":"M"},{"who":"全体股东","pain":"市值蒸发约1.44万亿，负和无对应赢家","link":"M"},{"who":"员工","pain":"站队、签证与文化断裂","link":"C"},{"who":"监管","pain":"出口管制与地缘合规的执行威慑","link":"Pol"},{"who":"他本人","pain":"33年集权结构在危机中的脆弱性","link":"P"}],"intuitions":[{"t":"业绩这么好，肯定能回来","bias":"光环效应：把经营当免死金牌"},{"t":"97%联名，民意能翻盘","bias":"多数幻觉：把意愿当权力"},{"t":"董事会说不行就不行","bias":"权威偏差：程序宿命论"},{"t":"美国公司丑闻必下台","bias":"刻板印象+可得性偏差"},{"t":"Altman能回来，他也能","bias":"类比谬误：幸存者偏差"},{"t":"股价跌成这样，回不来了","bias":"情绪锚定：把市场当预言机"}]};
+/* ================= 随机数与基础数学 ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+ t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+function softmax(u,t){t=t||1;const z=u.map(x=>x/t),m=Math.max(...z),e=z.map(x=>Math.exp(x-m));
+ const s=e.reduce((a,b)=>a+b,0);return e.map(x=>x/s);}
+function utils(x,w){w=w||W;return STATES.map(s=>{let u=w[s][5];for(let i=0;i<5;i++)u+=w[s][i]*x[ORDER[i]];return u;});}
+const pointM1=x=>softmax(utils(x));
+function perturb(rng,x0){const x={};ORDER.forEach(k=>x[k]=clamp(x0[k]+(rng()*2-1)*HALF));return x;}
+
+/* ================= 蒙特卡洛引擎 ================= */
+function mcEngine(x0,opt){opt=opt||{};const N=opt.n||6000,rng=mulberry32(SEED+(opt.seedOff||0));
+ const acc={};STATES.forEach(s=>acc[s]=[]);
+ for(let n=0;n<N;n++){let x=perturb(rng,x0);if(opt.dropC)x.C=0;
+  let w=W;
+  if(opt.bayesCoef){w={};STATES.forEach(s=>{const row=[];for(let i=0;i<5;i++){const c=W[s][i],sd=.30*(Math.abs(c)+.10);
+    row.push(c+gauss(rng)*sd);}row.push(W[s][5]+gauss(rng)*.2);w[s]=row;});}
+  const p=softmax(utils(x,w));STATES.forEach((s,i)=>acc[s].push(p[i]));}
+ const out={};STATES.forEach(s=>out[s]=q(acc[s]));out._acc=acc;return out;}
+function gauss(rng){let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();
+ return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function q(arr,qs){qs=qs||[.05,.1,.5,.9,.95];const s=[...arr].sort((a,b)=>a-b),n=s.length,o={};
+ qs.forEach(p=>{const i=clamp(Math.round(p*(n-1)),0,n-1);o['P'+p*100]=s[i];});return o;}
+
+/* ================= M3 系统动力学 ================= */
+function m3Point(x){let pi=0,cp=0,tr=1,al=0;const{E,P,Pol,M,C}=x;
+ for(let t=0;t<30;t++){pi=clamp(pi+.15*P-.02*pi);cp=clamp(cp+.12*(.6*E+.4*Pol)-.03*cp);
+  tr=clamp(tr-.10*M-.08*cp+.06*C);al=clamp(al+.10*C-.05*cp);}
+ return softmax([1.4*al+1.2*tr-1.5*cp-1.0*pi,1.3*pi+1.2*cp+.8*M-.8*al,
+  1.0*pi+.6*tr-.4*cp,1.4*cp+.8*E-.6*al]);}
+function mcM3(x0){const rng=mulberry32(SEED+2),N=6000;const acc={};STATES.forEach(s=>acc[s]=[]);
+ for(let n=0;n<N;n++){const x=perturb(rng,x0);m3Point(x).forEach((p,i)=>acc[STATES[i]].push(p));}
+ const o={};STATES.forEach(s=>o[s]=q(acc[s]));return o;}
+
+/* ================= M4 贝叶斯网络 ================= */
+function m4(x0){const ph=clamp(.5*x0.E+.5*x0.Pol),par=[ph,x0.P,x0.M,x0.C];const dist=[0,0,0,0];
+ for(let bits=0;bits<16;bits++){const st=[0,1,2,3].map(k=>(bits>>k)&1);let w=1;
+  st.forEach((v,i)=>w*=v?par[i]:1-par[i]);
+  const x={E:st[0],P:st[1],Pol:st[0],M:st[2],C:st[3]};
+  pointM1(x).forEach((p,i)=>dist[i]+=w*p);}
+ return dist;}
+
+/* ================= SNA 图结构与中心度 ================= */
+function buildGraph(edges){const names=[...new Set(edges.flatMap(e=>[e.source,e.target]))];
+ const idx={};names.forEach((n,i)=>idx[n]=i);const k=names.length;
+ const adj=Array.from({length:k},()=>Array(k).fill(0));
+ edges.forEach(e=>{const a=idx[e.source],b=idx[e.target];adj[a][b]+=e.strength;adj[b][a]+=e.strength;});
+ const degree=adj.map(r=>r.reduce((a,b)=>a+b,0));
+ const bc=Array(k).fill(0);
+ for(let src=0;src<k;src++){const pred={},sigma=Array(k).fill(0),dist=Array(k).fill(-1),stack=[],qq=[];
+  dist[src]=0;sigma[src]=1;qq.push(src);
+  while(qq.length){const v=qq.shift();stack.push(v);
+   for(let w=0;w<k;w++){if(adj[v][w]<=0)continue;
+    if(dist[w]<0){dist[w]=dist[v]+1;qq.push(w);}
+    if(dist[w]===dist[v]+1){sigma[w]+=sigma[v];(pred[w]=pred[w]||[]).push(v);}}}
+  const delta=Array(k).fill(0);
+  while(stack.length){const w=stack.pop();(pred[w]||[]).forEach(v=>delta[v]+=sigma[v]/sigma[w]*(1+delta[w]));
+   if(w!==src)bc[w]+=delta[w];}}
+ const norm=(k-1)*(k-2)||1;
+ return{names,idx,adj,degree,between:bc.map(b=>b/norm)};}
+
+/* 力导向仿真 */
+class ForceGraph{
+ constructor(edges,canvas){this.g=buildGraph(edges);this.cv=canvas;this.removed=new Set();
+  const k=this.g.names.length;this.px=[];this.py=[];this.vx=Array(k).fill(0);this.vy=Array(k).fill(0);
+  const rng=mulberry32(7);for(let i=0;i<k;i++){this.px[i]=rng()*2-1;this.py[i]=rng()*2-1;}
+  this.links=[];edges.forEach(e=>this.links.push({a:this.g.idx[e.source],b:this.g.idx[e.target],s:e.strength,rel:e.relation}));
+  this.alpha=1;}
+ isolate(step){ // 确定性地移除与黄仁勋相连的边，直到移除数等于 step
+  const hub=this.g.idx['黄仁勋本人'];
+  const hubEdges=this.links.map((l,i)=>({l,i})).filter(o=>o.l.a===hub||o.l.b===hub)
+   .sort((u,v)=>v.l.s-u.l.s);
+  for(let n=0;n<step&&n<hubEdges.length;n++)this.removed.add(hubEdges[n].i);}
+ reset(){this.removed.clear();}
+ tick(){const k=this.g.names.length,rep=1.7;
+  for(let i=0;i<k;i++){let fx=-this.px[i]*.055,fy=-this.py[i]*.055;
+   for(let j=0;j<k;j++){if(i===j)continue;let dx=this.px[i]-this.px[j],dy=this.py[i]-this.py[j];
+    let d2=dx*dx+dy*dy+.02,fr=rep/d2;fx+=dx*fr;fy+=dy*fr;}
+   this.vx[i]=(this.vx[i]+fx*.012)*.85;this.vy[i]=(this.vy[i]+fy*.012)*.85;}
+  this.links.forEach((l,i)=>{if(this.removed.has(i))return;
+   let dx=this.px[l.b]-this.px[l.a],dy=this.py[l.b]-this.py[l.a],d=Math.sqrt(dx*dx+dy*dy)+.01;
+   const f=(d-.5)*.04*l.s;this.vx[l.a]+=dx/d*f;this.vy[l.a]+=dy/d*f;this.vx[l.b]-=dx/d*f;this.vy[l.b]-=dy/d*f;});
+  for(let i=0;i<k;i++){this.px[i]=clamp(this.px[i]+this.vx[i],-1.02,1.02);this.py[i]=clamp(this.py[i]+this.vy[i],-1.02,1.02);}}
+ draw(){const c=setupCanvas(this.cv),Wd=this.cv.width/c.dpr,Hd=this.cv.height/c.dpr,ctx=c.ctx;
+  ctx.clearRect(0,0,Wd,Hd);const hub=this.g.idx['黄仁勋本人'];
+  this.links.forEach((l,i)=>{const cut=this.removed.has(i);
+   ctx.strokeStyle=cut?'rgba(100,116,143,.25)':(l.rel==='合规'?'rgba(255,92,122,.7)':'rgba(62,224,255,.45)');
+   ctx.lineWidth=cut?.6:1.2;if(cut)ctx.setLineDash([4,4]);
+   ctx.beginPath();ctx.moveTo(Wd/2+this.px[l.a]*Wd*.32,Hd/2+this.py[l.a]*Hd*.38);
+   ctx.lineTo(Wd/2+this.px[l.b]*Wd*.32,Hd/2+this.py[l.b]*Hd*.38);ctx.stroke();ctx.setLineDash([]);});
+  this.g.names.forEach((n,i)=>{const x=Wd/2+this.px[i]*Wd*.32,y=Hd/2+this.py[i]*Hd*.38;
+   const r=i===hub?11:7;ctx.beginPath();ctx.arc(x,y,r,0,7);
+   ctx.fillStyle=i===hub?'#3ee0ff':'#172136';ctx.fill();
+   ctx.strokeStyle=i===hub?'#fff':'#3ee0ff';ctx.lineWidth=i===hub?2:1;ctx.stroke();
+   ctx.fillStyle='#e8eefc';ctx.font='11px sans-serif';ctx.textAlign='center';
+   ctx.fillText(shortName(n),x,y+r+13);});}
+}
+function shortName(n){const m={'黄仁勋本人':'黄仁勋','临时CEO Colette Kress':'临时CEO','独立董事':'独立董事',
+ '独立律所Wachtell与检察官Joon H. Kim':'独立律所','监管机构':'监管','机构股东':'机构股东','盟友战情室':'盟友',
+ '员工群体':'员工','大客户（微软/谷歌/亚马逊/Meta/OpenAI）':'大客户','董事会成员（含董事长Harvey C. Jones）':'董事会'};
+ return m[n]||n.slice(0,6);}
+
+/* ================= Canvas 通用 ================= */
+function setupCanvas(cv){const dpr=window.devicePixelRatio||1,rect=cv.getBoundingClientRect();
+ cv.width=rect.width*dpr;cv.height=rect.height*dpr;const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+ return{ctx,dpr,w:rect.width,h:rect.height};}
+function drawLine(cv,series,opts){opts=opts||{};const{ctx,w,h}=setupCanvas(cv);
+ const pad=34;const all=series.flatMap(s=>s.data);let mn=Math.min(...all),mx=Math.max(...all);
+ if(opts.zero){mn=Math.min(mn,0);}const xr=v=>pad+(v/( (series[0].data.length-1))*(w-pad*1.4));
+ const yr=v=>h-pad-((v-mn)/((mx-mn)||1))*(h-pad*1.6);
+ ctx.strokeStyle='#22304d';ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-8,h-pad);ctx.stroke();
+ ctx.fillStyle='#64748f';ctx.font='10px monospace';
+ series.forEach(s=>{ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.beginPath();
+  s.data.forEach((v,i)=>{const x=xr(i),y=yr(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();});
+ if(opts.labels){opts.labels.forEach((l,i)=>{ctx.fillStyle='#64748f';ctx.fillText(l,pad+i*(w-pad*1.4)/((opts.labels.length-1)||1),h-12);});}
+ }
+function drawBars(cv,labels,vals,colors,horizontal){const{ctx,w,h}=setupCanvas(cv);
+ if(horizontal){const n=vals.length,bh=(h-8)/n;const mx=Math.max(...vals);
+  vals.forEach((v,i)=>{const y=6+i*bh,bw=(v/mx)*(w-168);
+   ctx.fillStyle=colors[i]||'#3ee0ff';ctx.beginPath();ctx.roundRect(110,y+3,bw,bh-8,4);ctx.fill();
+   ctx.fillStyle='#93a2c0';ctx.font='11px sans-serif';ctx.textAlign='right';ctx.fillText(labels[i],104,y+bh/2+3);
+   ctx.fillStyle='#e8eefc';ctx.textAlign='left';ctx.fillText((v*100).toFixed(1)+'%',114+bw,y+bh/2+3);});}
+ else{const n=vals.length,bw=(w-20)/n,mx=Math.max(...vals);
+  vals.forEach((v,i)=>{const x=10+i*bw,bh=(v/mx)*(h-34);
+   ctx.fillStyle=colors[i]||'#3ee0ff';ctx.beginPath();ctx.roundRect(x+4,h-24-bh,bw-8,bh,5);ctx.fill();
+   ctx.fillStyle='#93a2c0';ctx.font='10px sans-serif';ctx.textAlign='center';
+   ctx.fillText(labels[i],x+bw/2,h-10);});}}
+function drawHist(cv,arr,color){const{ctx,w,h}=setupCanvas(cv),bins=28,pad=20;
+ let mn=Math.min(...arr),mx=Math.max(...arr);const counts=Array(bins).fill(0);
+ arr.forEach(v=>{let b=Math.floor((v-mn)/((mx-mn)||1)*bins);b=clamp(b,0,bins-1);counts[b]++;});
+ const cm=Math.max(...counts),bw=(w-pad*1.4)/bins;
+ counts.forEach((c,i)=>{const bh=c/cm*(h-pad*1.8);ctx.fillStyle=color;
+  ctx.beginPath();ctx.roundRect(pad+i*bw,h-pad-bh,bw-1.5,bh,2);ctx.fill();});
+ ctx.fillStyle='#64748f';ctx.font='10px monospace';ctx.textAlign='left';
+ ctx.fillText(mn.toFixed(3),pad,h-6);ctx.textAlign='right';ctx.fillText(mx.toFixed(3),w-8,h-6);}
+function drawHeat(cv,grid,xl,yl){const{ctx,w,h}=setupCanvas(cv),pad=40;
+ const cw=(w-pad-8)/grid[0].length,ch=(h-pad-14)/grid.length;
+ grid.forEach((r,j)=>r.forEach((v,i)=>{const t=clamp(v);
+  ctx.fillStyle=`rgba(62,224,255,${.08+t*.85})`;ctx.fillRect(pad+i*cw,8+j*ch,cw-1,ch-1);
+  ctx.fillStyle=t>.55?'#080b12':'#cfe0ff';ctx.font='9px monospace';ctx.textAlign='center';
+  ctx.fillText(v.toFixed(2),pad+i*cw+cw/2,8+j*ch+ch/2+3);}));
+ ctx.fillStyle='#93a2c0';ctx.font='10px sans-serif';ctx.textAlign='center';
+ xl.forEach((l,i)=>ctx.fillText(l,pad+(i+.5)*cw,h-2));
+ ctx.textAlign='right';yl.forEach((l,j)=>ctx.fillText(l,pad-6,8+(j+.5)*ch));}
+/* ================= 会话状态 ================= */
+const KEY='huang_sim_v3';
+let S=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||fresh();}catch(e){return fresh();}}
+function fresh(){return{bet:null,conf:50,viewReact:{},intuition:null,theory:null,
+ knobs:Object.assign({},DATA.inputs),visited:{},modelDone:false};}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+ clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+const pct=v=>(v*100).toFixed(2)+'%';
+const pct1=v=>(v*100).toFixed(1)+'%';
+
+const SECTIONS=[
+ ['open','开场押注'],['facts','基本盘'],['pains','痛点'],['viewpoints','网络观点'],
+ ['intuitions','直觉判断'],['theory','选理论'],['vars','变量数据'],['models','模型引擎'],
+ ['detail','输出详情'],['sna','网络沙箱'],['sem','SEM路径'],['counter','反事实'],
+ ['history','历史校准'],['profile','决策画像']];
+
+function nav(){const n=document.getElementById('nav');
+ n.innerHTML=SECTIONS.map(([id,t])=>`<div class="pn ${cur()===id?'on':''}" data-go="${id}">${t}</div>`).join('');
+ n.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>location.hash=el.dataset.go);}
+function cur(){return (location.hash||'#open').slice(1);}
+function go(id){location.hash=id;}
+window.addEventListener('hashchange',render);
+
+function render(){nav();const id=cur();S.visited[id]=true;save();
+ const app=document.getElementById('app');app.innerHTML='';app.classList.remove('fade');void app.offsetWidth;
+ app.classList.add('fade');(R[id]||R.open)(app);window.scrollTo(0,0);}
+
+const certaintyTag=c=>({confirmed:['t-conf','已证实'],reported:['t-rep','媒体报道'],
+ rumor:['t-rum','传闻'],missing_evidence:['t-miss','缺证据']}[c]||['t-miss',c]);
+
+/* ================= 视图渲染器 ================= */
+const R={};
+
+R.open=function(el){
+ el.innerHTML=`
+ <div class="hero">
+  <div class="kicker">社会计算沙箱 · 证据截止 2026-11-18</div>
+  <div class="big">黄仁勋<br>到底还能不能回来？</div>
+  <p class="sub">先别问模型。凭你的直觉，先押一注。这一注会被存档，最后和模型对账。</p>
+ </div>
+ <div class="card">
+  <h3>你的直觉判断</h3>
+  <div class="row wrap" style="margin-top:12px">
+   <button class="btn sm ${S.bet==='comeback'?'primary':''}" data-bet="comeback">他能回来</button>
+   <button class="btn sm ${S.bet==='no'?'primary':''}" data-bet="no">他回不来</button>
+  </div>
+  <div style="margin-top:18px">
+   <div class="between"><span class="sub">你的信心</span><b class="cyan mono" id="confv">${S.conf}%</b></div>
+   <input type="range" min="1" max="99" value="${S.conf}" id="conf" style="--p:${S.conf}%">
+  </div>
+  <button class="btn primary" style="margin-top:16px" id="tofacts">钉下直觉锚，进入基本盘 →</button>
+ </div>
+ <div class="card" style="margin-top:14px">
+  <h3>这台模拟器怎么玩</h3>
+  <p class="sub" style="margin-bottom:0">基本盘 → 痛点 → 网络观点 → 你的直觉 → 选理论 → 选变量输数据 →
+  四模型并行运行 → 输出下钻 → 网络沙箱 → 反事实 → 历史校准 → 直觉与模型对账。全程不评分、不开奖，只校准你自己的权重。</p>
+ </div>`;
+ el.querySelectorAll('[data-bet]').forEach(b=>b.onclick=()=>{S.bet=b.dataset.bet;save();render();});
+ document.getElementById('conf').oninput=e=>{S.conf=+e.target.value;document.getElementById('confv').textContent=S.conf+'%';
+  e.target.style.setProperty('--p',S.conf+'%');save();};
+ document.getElementById('tofacts').onclick=()=>{if(!S.bet)toast('先押一注再走');else go('facts');};
+};
+
+R.facts=function(el){
+ const groups=[['经营面',DATA.facts.filter(f=>/营收|数据中心|指引|回购|积压|采购/.test(f.text))],
+  ['盘面',DATA.facts.filter(f=>/股价|收盘|市值/.test(f.text))],
+  ['治理面',DATA.facts.filter(f=>/辞任|调查|诉讼|监督|新加坡|Megaspeed|97%|股份|CEO|表态/.test(f.text))]];
+ el.innerHTML=`
+ <div class="sec"><div class="sec-h"><span class="no">01</span><h2>基本盘：不可争辩的事实墙</h2><span class="rule"></span></div>
+ <p class="sub">每条带日期、来源与确定性分级。已证实=官方公告；媒体报道=有具名来源；传闻=无具名来源；缺证据=不插值。</p>
+ ${groups.map(([g,fs])=>`<div class="card" style="margin-top:12px"><h3>${g} <span class="mut" style="font-size:13px">${fs.length} 条</span></h3>
+  ${fs.map(f=>{const[tc,tt]=certaintyTag(f.certainty);return`
+  <div style="margin-top:12px"><div class="row center" style="gap:8px;margin-bottom:4px">
+    <span class="mono mut" style="font-size:11px">${f.id}</span>
+    <span class="mono mut" style="font-size:11px">${f.date}</span>
+    <span class="tag ${tc}">${tt}</span></div>
+   <div style="font-size:14px">${f.text}</div>
+   <a class="src" href="${f.url}" target="_blank" rel="noopener">${f.url}</a></div>`;}).join('')}
+ </div>`).join('')}
+ <button class="btn primary" style="margin-top:16px" onclick="go('pains')">事实看完，进入痛点 →</button></div>`;
+};
+
+R.pains=function(el){
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">02</span><h2>痛点：每个主体在怕什么</h2><span class="rule"></span></div>
+ <div class="grid2">${DATA.pains.map(p=>`
+  <div class="card"><div class="row between"><h4>${p.who}</h4><span class="chip">连到 ${p.link}</span></div>
+   <p class="sub" style="margin:10px 0 0">${p.pain}</p></div>`).join('')}</div>
+ <div class="card" style="margin-top:14px"><h3>最锋利的一条</h3>
+  <p class="sub" style="margin-bottom:0">他越成功，客户越恐惧——五大客户全部在自研芯片。英伟达正在和自己的全部客户赛跑。这条，10-K 里不会明写。</p></div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('viewpoints')">进入网络观点 →</button></div>`;
+};
+
+R.viewpoints=function(el){
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">03</span><h2>网络观点：七条正在流传的叙事</h2><span class="rule"></span></div>
+ <p class="sub">先表态认同或不认同，你的反应会被记录。每条都附证据弱点与隐含假设。</p>
+ ${DATA.viewpoints.map((v,i)=>`
+ <div class="card" style="margin-top:12px">
+  <div class="row between center"><span class="tag ${v.evidence_type==='情绪'?'t-rum':v.evidence_type==='推断'?'t-rep':'t-conf'}">${v.evidence_type}</span>
+   <span class="mono mut" style="font-size:11px">#${i+1}</span></div>
+  <h4 style="margin:10px 0 6px">${v.narrative}</h4>
+  <div class="sub" style="font-size:13px"><b class="amb">证据弱点：</b>${v.weakness}</div>
+  <div class="sub" style="font-size:13px;margin-top:6px"><b class="vio">隐含假设：</b>${v.assumption}</div>
+  <div class="row" style="margin-top:12px">
+   <button class="btn sm ${S.viewReact[i]==='yes'?'primary':'ghost'}" data-vr="${i}" data-v="yes">认同</button>
+   <button class="btn sm ${S.viewReact[i]==='no'?'primary':'ghost'}" data-vr="${i}" data-v="no">不认同</button>
+  </div></div>`).join('')}
+ <button class="btn primary" style="margin-top:16px" onclick="go('intuitions')">进入直觉判断 →</button></div>`;
+ el.querySelectorAll('[data-vr]').forEach(b=>b.onclick=()=>{S.viewReact[b.dataset.vr]=b.dataset.v;save();render();});
+};
+
+R.intuitions=function(el){
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">04</span><h2>你的直觉判断：哪一句最像你</h2><span class="rule"></span></div>
+ <p class="sub">这些是普通人最常见的第一反应。选一句，然后看它背后的认知偏差。</p>
+ ${DATA.intuitions.map((v,i)=>`
+ <div class="opt ${S.intuition===i?'sel':''}" data-int="${i}" style="margin-top:10px">
+  <h4><span class="dash" style="background:${S.intuition===i?'#3ee0ff':'#22304d'}"></span>${v.t}</h4>
+  ${S.intuition===i?`<div class="sub" style="font-size:13px;margin-top:8px"><b class="red">认知偏差：</b>${v.bias}</div>`:''}
+ </div>`).join('')}
+ <button class="btn primary" style="margin-top:16px" onclick="go('theory')">去选理论 →</button></div>`;
+ el.querySelectorAll('[data-int]').forEach(o=>o.onclick=()=>{S.intuition=+o.dataset.int;save();render();});
+};
+
+R.theory=function(el){
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">05</span><h2>选一副看世界的眼镜</h2><span class="rule"></span></div>
+ <div class="grid2">
+  <div class="opt ${S.theory==='system'?'sel':''}" data-th="system">
+   <h4>复杂系统视角</h4><p class="sub" style="font-size:13px;margin:8px 0 0">看得见结构脆弱性与反馈回路，看不见人的意图与交易。</p></div>
+  <div class="opt ${S.theory==='power'?'sel':''}" data-th="power">
+   <h4>权力博弈视角</h4><p class="sub" style="font-size:13px;margin:8px 0 0">看得见意图与力量对比，看不见系统的路径依赖。</p></div>
+ </div>
+ <div class="card" style="margin-top:14px"><p class="sub" style="margin:0">本模拟器默认两副眼镜叠加：用系统视角建模，用博弈视角解读，不做对错定性。</p></div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('vars')">进入变量与数据 →</button></div>`;
+ el.querySelectorAll('[data-th]').forEach(o=>o.onclick=()=>{S.theory=o.dataset.th;save();render();});
+};
+
+R.vars=function(el){
+ const meta={E:['证据硬度','证据到底有多硬'],P:['治理程序','程序走到哪一步'],
+  Pol:['政治净压力','多少人要他走、多少人要他留'],M:['市场重定价','股价跌了多少'],
+  C:['向心力','多少人真心想他回来']};
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">06</span><h2>五个旋钮：读数与证据锚</h2><span class="rule"></span></div>
+ <p class="sub">每个读数来自显式合成规则，可复算。拖动它，后面所有模型会实时重算。</p>
+ <div class="card">${ORDER.map(k=>`
+  <div class="knob" style="margin:14px 0">
+   <div class="top"><div><b>${meta[k][0]}</b> <span class="chip mono">${k}</span>
+    <div class="mut" style="font-size:12px">${meta[k][1]}</div></div>
+   <span class="val" id="v_${k}">${S.knobs[k].toFixed(3)}</span></div>
+   <input type="range" min="0" max="100" value="${Math.round(S.knobs[k]*100)}" data-k="${k}" style="--p:${S.knobs[k]*100}%">
+  </div>`).join('')}
+  <div class="divider"></div>
+  <button class="btn ghost sm" id="resetKnob">恢复证据读数</button>
+ </div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('models')">进入模型引擎 →</button></div>`;
+ el.querySelectorAll('[data-k]').forEach(r=>r.oninput=e=>{const k=e.target.dataset.k;
+  S.knobs[k]=e.target.value/100;e.target.style.setProperty('--p',e.target.value+'%');
+  document.getElementById('v_'+k).textContent=S.knobs[k].toFixed(3);save();});
+ document.getElementById('resetKnob').onclick=()=>{S.knobs=Object.assign({},DATA.inputs);save();render();};
+};
+/* ================= 模型引擎（四模型并行） ================= */
+R.models=function(el){
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">07</span><h2>模型引擎：四个模型，一组分歧</h2><span class="rule"></span></div>
+ <div class="card">
+  <div class="row between center"><h3>蒙特卡洛引擎</h3><span class="chip mono" id="mcprog">待运行</span></div>
+  <div class="cv-wrap" style="margin-top:12px"><canvas id="mccan" height="200"></canvas></div>
+  <div class="legend"><span><i style="background:#3ddc97"></i>回归概率经验分布</span></div>
+  <div class="row" style="margin-top:12px">
+   <button class="btn primary sm" id="runmc">运行 6000 次蒙特卡洛</button>
+   <button class="btn ghost sm" id="runmc4">对照：锁死向心力</button></div>
+  <div id="mcq" class="grid3" style="margin-top:14px"></div>
+ </div>
+ <div class="card" style="margin-top:14px">
+  <h3>四模型分歧带（P50）</h3>
+  <div class="cv-wrap" style="margin-top:12px"><canvas id="ens" height="240"></canvas></div>
+  <div class="legend">
+   <span><i style="background:#3ee0ff"></i>M1 规则softmax</span>
+   <span><i style="background:#5aa2ff"></i>M2 贝叶斯logistic</span>
+   <span><i style="background:#ffb454"></i>M3 系统动力学</span>
+   <span><i style="background:#8b7bff"></i>M4 贝叶斯网络</span></div>
+  <div id="enstable" style="margin-top:12px"></div>
+ </div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('detail')">进入输出详情下钻 →</button></div>`;
+
+ const mccan=document.getElementById('mccan');
+ function animate(dropC,cb){
+  const rng=mulberry32(SEED),N=6000,batch=400;let done=0;const arr=[];
+  document.getElementById('mcprog').textContent='0 / '+N;
+  function step(){
+   for(let i=0;i<batch&&done<N;i++,done++){let x=perturb(rng,S.knobs);if(dropC)x.C=0;
+    arr.push(pointM1(x)[0]);}
+   drawHist(mccan,arr,'#3ddc97');
+   document.getElementById('mcprog').textContent=done+' / '+N;
+   if(done<N)requestAnimationFrame(step);else cb(q(arr));}
+  requestAnimationFrame(step);}
+ document.getElementById('runmc').onclick=()=>animate(false,r=>{
+  document.getElementById('mcq').innerHTML=STATES.map((s,i)=>{const qq=mcEngine(S.knobs)[s];
+   return`<div class="stat"><div class="v" style="color:${SCOLOR[s]}">${pct(qq.P50)}</div>
+    <div class="l">${SLABEL[s]}<br>P10 ${pct1(qq.P10)} · P90 ${pct1(qq.P90)}</div></div>`;}).join('');
+  drawEnsemble();});
+ document.getElementById('runmc4').onclick=()=>animate(true,()=>toast('已用锁死向心力重跑'));
+
+ function drawEnsemble(){
+  const m1=mcEngine(S.knobs),m2=mcEngine(S.knobs,{bayesCoef:true,seedOff:1}),m3=mcM3(S.knobs),bm4=m4(S.knobs);
+  const cv=document.getElementById('ens'),{ctx,w,h}=setupCanvas(cv),pad=46;
+  const cols=['#3ee0ff','#5aa2ff','#ffb454','#8b7bff'];
+  const data=STATES.map((s,i)=>[m1[s].P50,m2[s].P50,m3[s].P50,bm4[i]]);
+  const gw=(w-pad-10)/4;
+  data.forEach((vals,gi)=>{const mx=Math.max(...data.flat());
+   vals.forEach((v,mi)=>{const bw=gw/5,bh=(v/mx)*(h-46);
+    ctx.fillStyle=cols[mi];ctx.beginPath();
+    ctx.roundRect(pad+gi*gw+6+mi*bw,h-28-bh,bw-2,bh,3);ctx.fill();});
+   ctx.fillStyle='#93a2c0';ctx.font='10px sans-serif';ctx.textAlign='center';
+   ctx.fillText(['回归','外部','内部','黑天鹅'][gi],pad+gi*gw+gw/2,h-12);});
+  document.getElementById('enstable').innerHTML=STATES.map((s,i)=>`
+   <div class="barline"><span class="lab">${SLABEL[s]}</span><div class="track"></div>
+    <span class="num">${pct1(m1[s].P50)} / ${pct1(m2[s].P50)} / ${pct1(m3[s].P50)} / ${pct1(bm4[i])}</span></div>`).join('');
+ }
+ drawEnsemble();
+ if(!S.modelDone){setTimeout(()=>{const b=document.getElementById('runmc');if(b)b.click();
+  S.modelDone=true;save();},400);}
+};
+
+/* ================= 输出详情：五级下钻 ================= */
+R.detail=function(el){
+ const x=S.knobs,p=pointM1(x),m1=mcEngine(x);
+ const tor=ORDER.map(k=>{let lo=Object.assign({},x),hi=Object.assign({},x);
+  lo[k]=clamp(x[k]-HALF);hi[k]=clamp(x[k]+HALF);
+  const a=pointM1(lo)[0],b=pointM1(hi)[0];return{k,range:Math.abs(b-a),a,b};}).sort((u,v)=>v.range-u.range);
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">08</span><h2>模型输出详情：五级下钻</h2><span class="rule"></span></div>
+ <details open><summary>L1 完整概率分布 <span class="mut">P10 / P50 / P90</span></summary><div class="body">
+  ${STATES.map((s,i)=>`<div class="barline"><span class="lab">${SLABEL[s]}</span>
+   <div class="track"><div class="fill" style="width:${m1[s].P50*100}%;background:${SCOLOR[s]}"></div></div>
+   <span class="num">${pct(m1[s].P50)}</span></div>
+   <div class="mut" style="font-size:11px;margin:-4px 0 6px 126px">区间 ${pct1(m1[s].P10)} ~ ${pct1(m1[s].P90)}</div>`).join('')}
+ </div></details>
+ <details><summary>L2 效用分解 <span class="mut">每个变量对每状态的贡献</span></summary><div class="body">
+  ${STATES.map((s,si)=>`<div style="margin-bottom:10px"><b style="color:${SCOLOR[s]}">${SLABEL[s]}</b>
+   <div class="row wrap" style="margin-top:6px">
+   ${ORDER.map((k,i)=>`<span class="chip mono">${k} ${W[s][i]*x[k]>=0?'+':''}${(W[s][i]*x[k]).toFixed(2)}</span>`).join('')}
+   <span class="chip mono">bias ${W[s][5]}</span>
+   <span class="chip on mono">u=${utils(x)[si].toFixed(2)}</span></div></div>`).join('')}
+ </div></details>
+ <details><summary>L3 敏感性排序 <span class="mut">Tornado 对回归概率</span></summary><div class="body">
+  ${tor.map(t=>`<div class="barline"><span class="lab mono">${t.k}</span>
+   <div class="track"><div class="fill" style="width:${t.range*100*18}%;background:#5aa2ff"></div></div>
+   <span class="num">${pct1(t.range)}</span></div>`).join('')}
+ </div></details>
+ <details><summary>L4 不确定性来源 <span class="mut">编码误差 vs 权重/温度</span></summary><div class="body">
+  <p class="sub" style="margin:0">区间由两部分合成：单点编码 ±0.10 的扰动，以及权重/温度 ±30% 的情景扫描。
+  区间宽度量的是模型的无知，不是世界的随机性。</p></div></details>
+ <details><summary>L5 假设与证据 <span class="mut">权重全表 / 缺证据 / 已知偏差</span></summary><div class="body">
+  <p class="sub">权重全程锁定，未用历史结果反向调参。已知偏差：系统性高估外部改组、低估内部接班。
+  缺证据维度（白宫正式态度）不插值。</p></div></details>
+ <button class="btn primary" style="margin-top:16px" onclick="go('sna')">进入网络沙箱 →</button></div>`;
+};
+
+/* ================= SNA 网络沙箱 ================= */
+R.sna=function(el){
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">09</span><h2>社会网络沙箱：节点隔离</h2><span class="rule"></span></div>
+ <div class="card">
+  <div class="cv-wrap"><canvas id="fc" height="380"></canvas></div>
+  <div class="row" style="margin-top:12px">
+   <button class="btn primary sm" id="play">播放力导向</button>
+   <button class="btn sm" id="iso">逐步隔离</button>
+   <button class="btn ghost sm" id="reset">重置</button></div>
+  <div class="mut" style="font-size:12px;margin-top:10px">红色边=合规关系；虚线=已被隔离的边。</div>
+ </div>
+ <div class="grid2" style="margin-top:14px">
+  <div class="card"><h3>介数中心度（全网络）</h3><div id="bct" style="margin-top:10px"></div></div>
+  <div class="card"><h3>枢纽度随隔离变化</h3>
+   <div class="cv-wrap" style="margin-top:10px"><canvas id="sl" height="200"></canvas></div></div>
+ </div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('sem')">进入SEM路径 →</button></div>`;
+
+ const fg=new ForceGraph(DATA.edges,document.getElementById('fc'));let raf=null,isoStep=0;
+ function loop(){fg.tick();fg.draw();raf=requestAnimationFrame(loop);}
+ loop();
+ document.getElementById('play').onclick=()=>{if(raf){cancelAnimationFrame(raf);raf=null;}else loop();};
+ document.getElementById('iso').onclick=()=>{isoStep++;fg.isolate(isoStep);toast('已隔离 '+fg.removed.size+' 条边');};
+ document.getElementById('reset').onclick=()=>{isoStep=0;fg.reset();};
+
+ const g=buildGraph(DATA.edges),hub=g.idx['黄仁勋本人'];
+ document.getElementById('bct').innerHTML=g.names.map((n,i)=>{
+  const b=g.between[i];return`<div class="barline"><span class="lab" style="width:90px">${shortName(n)}</span>
+  <div class="track"><div class="fill" style="width:${b*100}%;background:${i===hub?'#3ee0ff':'#8b7bff'}"></div></div>
+  <span class="num">${b.toFixed(3)}</span></div>`;}).join('');
+
+ // 时间切片：逐步移除枢纽边，重算其加权度
+ const links=DATA.edges.map(e=>({a:g.idx[e.source],b:g.idx[e.target],s:e.strength}));
+ const hubLinks=links.filter(l=>l.a===hub||l.b===hub).sort((u,v)=>v.s-u.s);
+ const series=[];let adj=g.adj.map(r=>r.slice());
+ for(let rm=0;rm<=hubLinks.length;rm++){
+  if(rm>0){const l=hubLinks[rm-1];adj[l.a][l.b]-=l.s;adj[l.b][l.a]-=l.s;}
+  series.push(adj[hub].reduce((a,b)=>a+b,0));}
+ drawLine(document.getElementById('sl'),[{data:series,color:'#3ee0ff'}],
+  {labels:series.map((_,i)=>i),zero:false});
+};
+
+/* ================= SEM 路径先验模型 ================= */
+R.sem=function(el){
+ const paths=[
+  {a:'ξ1 地缘合规',b:'η1 市场恐慌',c:.45,lo:.25,hi:.65},
+  {a:'ξ2 治理程序',b:'η1 市场恐慌',c:.35,lo:.20,hi:.55},
+  {a:'ξ3 向心力',b:'η1 市场恐慌',c:-.15,lo:-.30,hi:0},
+  {a:'ξ1 地缘合规',b:'η2 结局',c:.30,lo:.10,hi:.50},
+  {a:'ξ2 治理程序',b:'η2 结局',c:.55,lo:.35,hi:.75},
+  {a:'ξ3 向心力',b:'η2 结局',c:.40,lo:.20,hi:.60},
+  {a:'η1 市场恐慌',b:'η2 结局',c:.50,lo:.30,hi:.70}];
+ const eff=[
+  {x:'ξ2 治理程序',dir:.55,ind:.35*.50,tot:.55+.35*.50},
+  {x:'ξ1 地缘合规',dir:.30,ind:.45*.50,tot:.30+.45*.50},
+  {x:'ξ3 向心力',dir:.40,ind:-.15*.50,tot:.40-.15*.50}];
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">10</span><h2>SEM 路径先验模型</h2><span class="rule"></span></div>
+ <div class="card">
+  <div class="cv-wrap"><svg viewBox="0 0 640 340" width="100%">
+   <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L7,3 L0,6 Z" fill="#3ee0ff"/></marker></defs>
+   <rect class="flow-lat" x="40" y="30" width="130" height="46" rx="10"/>
+   <text class="flow-text" x="105" y="58" text-anchor="middle">ξ1 地缘合规压力</text>
+   <rect class="flow-lat" x="40" y="150" width="130" height="46" rx="10"/>
+   <text class="flow-text" x="105" y="178" text-anchor="middle">ξ2 治理程序</text>
+   <rect class="flow-lat" x="40" y="270" width="130" height="46" rx="10"/>
+   <text class="flow-text" x="105" y="298" text-anchor="middle">ξ3 向心力</text>
+   <rect class="flow-lat" x="270" y="120" width="130" height="46" rx="10"/>
+   <text class="flow-text" x="335" y="148" text-anchor="middle">η1 市场恐慌</text>
+   <rect class="flow-lat" x="490" y="120" width="120" height="46" rx="10"/>
+   <text class="flow-text" x="550" y="148" text-anchor="middle">η2 结局</text>
+   <path class="flow-path" stroke="#ffb454" d="M170,55 C240,70 250,110 270,130"/>
+   <path class="flow-path" stroke="#ffb454" d="M170,170 L270,148"/>
+   <path class="flow-path" stroke="#ff5c7a" d="M170,290 C250,250 250,180 270,160"/>
+   <path class="flow-path" stroke="#3ee0ff" d="M170,50 C350,20 440,90 490,125"/>
+   <path class="flow-path" stroke="#3ee0ff" d="M170,165 C330,120 420,130 490,140"/>
+   <path class="flow-path" stroke="#3ddc97" d="M170,295 C360,300 440,190 490,160"/>
+   <path class="flow-path" stroke="#8b7bff" d="M400,143 L490,143"/>
+  </svg></div>
+  <p class="mut" style="font-size:12px;margin-top:8px">路径系数为专家先验区间，非估计量；n=1 下无 CFI/RMSEA 等拟合指数，不编造。</p>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>效应分解（路径追踪）</h3>
+  <div class="row wrap" style="margin-top:10px">
+   <span class="chip">外生潜变量</span><span class="chip">直接效应</span><span class="chip">间接效应</span><span class="chip on">总效应</span></div>
+  ${eff.map(e=>`<div class="barline" style="margin-top:10px"><span class="lab">${e.x}</span>
+   <div class="track"></div><span class="num">${e.tot.toFixed(3)}</span></div>
+   <div class="mut" style="font-size:11px;margin:-4px 0 4px 126px">直接 ${e.dir.toFixed(2)} · 间接 ${e.ind.toFixed(3)}</div>`).join('')}
+ </div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('counter')">进入反事实实验室 →</button></div>`;
+};
+
+/* ================= 反事实与敏感性 ================= */
+R.counter=function(el){
+ const x=S.knobs;
+ // 双变量热力图 Pol x C
+ const pols=[.2,.4,.6,.8,1],cs=[.2,.4,.6,.8,1];
+ const grid=cs.map(cv=>pols.map(pv=>{const t=Object.assign({},x);t.Pol=pv;t.C=cv;return pointM1(t)[0];}));
+ const tor=ORDER.map(k=>{let lo=Object.assign({},x),hi=Object.assign({},x);
+  lo[k]=clamp(x[k]-HALF);hi[k]=clamp(x[k]+HALF);
+  return{k,range:Math.abs(pointM1(hi)[0]-pointM1(lo)[0])};}).sort((a,b)=>b.range-a.range);
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">11</span><h2>反事实实验室</h2><span class="rule"></span></div>
+ <div class="grid2">
+  <div class="card"><h3>Tornado 局部敏感性</h3><div class="cv-wrap" style="margin-top:10px"><canvas id="to" height="180"></canvas></div></div>
+  <div class="card"><h3>Sobol 全局效应（全输入空间）</h3><div id="sob" style="margin-top:10px"></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>双变量情景热力图：政治 × 向心力 → 回归概率</h3>
+  <div class="cv-wrap" style="margin-top:10px"><canvas id="heat" height="260"></canvas></div>
+  <div class="mut" style="font-size:11px;margin-top:6px">纵轴 向心力 C，横轴 政治净压力 Pol。</div></div>
+ <div class="card" style="margin-top:14px"><h3>阈值分析：单变量能否翻转首选结局</h3>
+  <div id="thr" style="margin-top:10px"></div>
+  <p class="sub" style="margin:10px 0 0;font-size:13px">当前配置下，任何单一变量在其完整取值区间内都无法把首选结局从“外部改组”上移——要改变结果，必须多变量联合移动。</p></div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('history')">进入历史校准 →</button></div>`;
+
+ drawBars(document.getElementById('to'),tor.map(t=>t.k),tor.map(t=>t.range),
+  tor.map(t=>'#5aa2ff'),true);
+ document.getElementById('sob').innerHTML=ORDER.map(k=>{const v=DATA.sobol[k];
+  return`<div class="barline"><span class="lab mono">${k}</span><div class="track">
+  <div class="fill" style="width:${v.ST*100}%;background:#8b7bff"></div></div>
+  <span class="num">${v.ST.toFixed(2)}</span></div>`;}).join('');
+ drawHeat(document.getElementById('heat'),grid,pols.map(String),cs.map(String));
+ document.getElementById('thr').innerHTML=ORDER.map(k=>{const t=DATA.threshold[k];
+  return`<div class="barline"><span class="lab mono">${k}</span><div class="track"></div>
+  <span class="num">${t.flip_at===null?'不翻转':t.flip_at}</span></div>`;}).join('');
+};
+
+/* ================= 历史校准 ================= */
+R.history=function(el){
+ const m=DATA.hist_metrics;
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">12</span><h2>历史校准：八场旧试</h2><span class="rule"></span></div>
+ <div class="grid3">
+  <div class="stat"><div class="v grn">${pct1(m.top1_accuracy)}</div><div class="l">方向命中（6/8）</div></div>
+  <div class="stat"><div class="v cyan">${m.brier_score_mean}</div><div class="l">Brier（均匀基准 .750）</div></div>
+  <div class="stat"><div class="v vio">${m.log_loss_mean}</div><div class="l">LogLoss（均匀 1.386）</div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><p class="sub" style="margin:0">${m.calibration_note}。权重不据此回改，作为已知偏差披露。编码者知道结局，存在事后偏差，本结果为机制合理性检验，非样本外预测。</p></div>
+ <div class="grid2" style="margin-top:14px">
+ ${Object.values(DATA.historical).map(c=>`
+  <div class="card"><div class="row between center"><h4>${c.person}</h4>
+   <span class="tag ${c.hit?'t-conf':'t-rum'}">${c.hit?'命中':'误判'}</span></div>
+   <div class="mut" style="font-size:12px;margin-top:8px">实际 ${SLABEL[c.actual]} · 预测 ${SLABEL[c.predicted]}</div>
+   <div class="mono cyan" style="font-size:13px;margin-top:6px">给实际结局 ${pct1(c.p_actual)}</div></div>`).join('')}
+ </div>
+ <button class="btn primary" style="margin-top:16px" onclick="go('profile')">进入决策画像 →</button></div>`;
+};
+
+/* ================= 决策画像与对账 ================= */
+R.profile=function(el){
+ const p=pointM1(S.knobs);
+ const modelComeback=p[0];
+ const intuitionTxt=S.intuition!==null?DATA.intuitions[S.intuition].t:'未选择';
+ const agreeCount=Object.values(S.viewReact).filter(v=>v==='yes').length;
+ const tags=[];
+ if(S.bet==='comeback')tags.push('直觉回归派');else tags.push('直觉切割派');
+ if(S.conf>=70)tags.push('高信心');else if(S.conf<=35)tags.push('谨慎');
+ if(agreeCount>=4)tags.push('易认同叙事');
+ tags.push(S.theory==='power'?'博弈偏好':'系统偏好');
+ el.innerHTML=`<div class="sec"><div class="sec-h"><span class="no">13</span><h2>决策画像：直觉 vs 模型对账</h2><span class="rule"></span></div>
+ <div class="card">
+  <div class="row between wrap"><h3>你的决策画像</h3>
+   <div class="row wrap">${tags.map(t=>`<span class="chip on">${t}</span>`).join('')}</div></div>
+  <div class="divider"></div>
+  <div class="row between"><span class="sub">你的押注</span><b>${S.bet==='comeback'?'他能回来':'他回不来'}（信心 ${S.conf}%）</b></div>
+  <div class="row between" style="margin-top:8px"><span class="sub">你的直觉原型</span><b style="font-size:13px">${intuitionTxt}</b></div>
+  <div class="row between" style="margin-top:8px"><span class="sub">模型给回归的概率</span><b class="grn mono">${pct(modelComeback)}</b></div>
+  <div class="row between" style="margin-top:8px"><span class="sub">模型首选结局</span><b class="cyan">${SLABEL[STATES[p.indexOf(Math.max(...p))]]}</b></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>对账结论</h3>
+  <p class="sub" style="margin:10px 0 0">你和模型的差别不在结论，在权重：你给“人心”和“程序”分配了多少。
+  模型不评判你，它只是把假设摆到台面。你可以回到“变量数据”拖动旋钮，用它校准你自己的权重。</p></div>
+ <div class="row" style="margin-top:16px">
+  <button class="btn primary sm grow" onclick="go('vars')">回去调权重</button>
+  <button class="btn ghost sm grow" id="restart">清空重玩</button></div>
+ <p class="mut" style="font-size:11px;margin-top:16px">本模拟器为社会计算教学与研究工具，不构成投资建议；主观读数均为显式假设，缺证据不插值。</p>
+ </div>`;
+ document.getElementById('restart').onclick=()=>{localStorage.removeItem(KEY);S=fresh();save();render();};
+};
+
+/* ================= 启动 ================= */
+if(!location.hash)location.hash='#open';
+render();
+</script>
+</body>
+</html>
